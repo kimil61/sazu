@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>오늘의 운세 대시보드</title>
+  <style>
+    body {
+      font-family: 'Apple SD Gothic Neo', sans-serif;
+      background: #fdf7ff;
+      margin: 0;
+      padding: 16px;
+      font-size: 17px;
+    }
+
+    .container {
+      width: 100%;
+      background: white;
+      padding: 24px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      font-size: 24px;
+      text-align: center;
+      color: #6a1b9a;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: 20px;
+      color: #6a1b9a;
+      margin-top: 24px;
+    }
+
+    p, label {
+      font-size: 17px;
+      line-height: 1.6;
+      color: #444;
+    }
+
+    .section {
+      margin-top: 24px;
+    }
+
+    input, select {
+      width: 100%;
+      font-size: 18px;
+      padding: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      margin-top: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 24px;
+      background-color: #6a1b9a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #4a148c;
+    }
+
+    .menu-list a {
+      display: block;
+      background: #6a1b9a;
+      color: white;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .menu-list a:hover {
+      background: #4a148c;
+    }
+
+    .tip, .section > div, .spinner {
+      font-size: 16px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 5px solid #e0b3ff;
+      border-top: 5px solid #6a1b9a;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes popFade {
+      0%   { transform: translateX(-50%) scale(0.8); opacity: 0; }
+      20%  { transform: translateX(-50%) scale(1.1); opacity: 1; }
+      60%  { transform: translateX(-50%) scale(1); }
+      100% { transform: translateX(-50%) scale(1); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="welcomeBanner" style="
+    display:none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffeb3b;
+    padding: 20px 30px;
+    border-radius: 16px;
+    font-weight: bold;
+    font-size: 18px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    z-index: 9999;
+    animation: popFade 4s ease forwards;
+  ">
+    🎉 {{ name }}님, 당신의 사주팔자 세계에 오신 걸 환영합니다!
+  </div>
+  <div class="container">
+    <h2>🔮 {{ name }}님의 사주팔자</h2>
+
+    <div class="section">
+      <h3>🌿 사주 상세 정보</h3>
+      <table style="width:100%; border-collapse: collapse; margin-top: 12px; font-size: 16px;">
+        <thead>
+          <tr style="background-color: #f3e5f5; color: #4a148c;">
+            <th style="padding: 10px; border: 1px solid #ccc;">항목</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">년柱</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">월柱</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">일柱</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">시柱</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ccc;">천간</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.gan }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.gan }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.gan }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.gan }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ccc;">지지</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.zhi }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ccc;">오행</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.element_gan }}/{{ saju_info.year.element_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.element_gan }}/{{ saju_info.month.element_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.element_gan }}/{{ saju_info.day.element_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.element_gan }}/{{ saju_info.hour.element_zhi }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ccc;">음양</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.yin_gan }}/{{ saju_info.year.yin_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.yin_gan }}/{{ saju_info.month.yin_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.yin_gan }}/{{ saju_info.day.yin_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.yin_gan }}/{{ saju_info.hour.yin_zhi }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ccc;">십성</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.ten_god }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.ten_god }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.ten_god }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.ten_god }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ccc;">지지의 십성</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.ten_god_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.ten_god_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.ten_god_zhi }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.ten_god_zhi }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ccc;">십이운성</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.twelve_stage }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.twelve_stage }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.twelve_stage }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.twelve_stage }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ccc;">십이신살</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.twelve_god }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.twelve_god }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.twelve_god }}</td>
+            <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.twelve_god }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      
+      {% if ilju_interpretation and ilju_interpretation.kr %}
+        <div style="margin-top: 20px; background: #f3f3ff; border-left: 5px solid #7986cb; padding: 15px; border-radius: 8px;">
+          <strong>📜 일주 해석 ({{ ilju | safe }}):</strong><br><br>
+          {{ ilju_interpretation.kr | safe }}
+        </div>
+      {% endif %}
+      <h3>✨ AI 사주 해석</h3>
+      <p>{{ saju_analysis|safe }}</p>
+      <h3>🧠 SajuAnalyzer 분석 결과</h3>
+      <p>{{ saju_analyzer_result|safe }}</p>
+
+    </div>
+
+    <div class="section">
+      <div style="margin-bottom: 20px; background: #fff3e0; border-left: 5px solid #ffb74d; padding: 15px; border-radius: 8px; color: #444;">
+        ☕ 마음에 드셨다면, 따뜻한 커피 한 잔으로 응원해 주세요! 
+        <a href="{{ coffee_link }}" target="_blank" style="color: #d84315; font-weight: bold; text-decoration: none; margin-left: 8px;">
+          커피 사주기 →
+        </a>
+      </div>
+      <!-- <h3>🔍 더 알고 싶다면?</h3>
+      <div class="menu-list">
+        <a href="#" onclick="loadFortune('today')">🌟 오늘의 운세</a>
+        <a href="#" onclick="loadFortune('money')">내 지갑에 행운이 들어올까?</a>
+        <a href="#" onclick="loadFortune('health')">이번 주 건강, 문제 없을까?</a>
+        <a href="#" onclick="openMatchModal()">짝궁과 나의 궁합 점수는?</a>
+        <a href="#" onclick="loadFortune('mission')">오늘 나의 특별한 미션은?</a>
+      </div> 
+      -->
+      <div id="loadingSpinner" style="display:none; margin-top: 30px; text-align: center;">
+        <div class="spinner"></div>
+        <p style="margin-top: 10px; color: #6a1b9a;">결과를 받아오는 중입니다...</p>
+      </div>
+    </div>
+
+    <div id="fortuneModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 999; overflow-y: auto;">
+      <div style="background: white; max-width: 700px; margin: 100px auto; padding: 40px; border-radius: 16px; position: relative; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); max-height: 90vh; overflow-y: auto;">
+        <button onclick="closeModal()" style="position: absolute; top: 10px; right: 10px; background: #e0e0e0; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 18px; font-weight: bold; color: #555; cursor: pointer;">×</button>
+        <h3 id="modalTitle" style="color: #6a1b9a; font-size: 22px; text-align: center; margin-bottom: 20px;"></h3>
+        <div id="modalContent" style="margin-top: 20px; line-height: 1.8; color: #333; font-size: 15px; text-align: left;"></div>
+      </div>
+    </div>
+
+    <div id="matchModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 999; overflow-y: auto;">
+      <div style="background: white; max-width: 600px; margin: 80px auto; padding: 40px; border-radius: 16px; position: relative; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); max-height: 90vh; overflow-y: auto;">
+        <button onclick="closeMatchModal()" style="position: absolute; top: 10px; right: 10px; background: #e0e0e0; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 18px; font-weight: bold; color: #555; cursor: pointer;">×</button>
+        <h3 style="color: #d81b60; text-align: center;">💘 궁합 점수 보기</h3>
+
+        <label>내 이름</label>
+        <input type="text" id="yourName" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <label>내 생년월일</label>
+        <input type="date" id="yourBirth" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <label>짝궁 이름</label>
+        <input type="text" id="partnerName" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <label>짝궁 생년월일</label>
+        <input type="date" id="partnerBirth" style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #ccc; border-radius:6px;">
+
+        <button onclick="alert('결제 기능은 아직 준비 중입니다.')" style="background:#6a1b9a; color:white; padding:12px 24px; border:none; border-radius:8px; font-weight:bold; width:100%;">₩1,000 결제하고 궁합보기</button>
+        <div style="text-align: center; margin-top: 20px;">
+          <p style="font-size: 14px; color: #666;">
+            운세가 마음에 드셨다면…
+              <a href="{{ coffee_link }}" target="_blank" style="color: #d81b60; font-weight: bold; text-decoration: none;">
+                ☕ 따뜻한 커피 한 잔으로 응원해 주세요
+              </a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- <div class="tip">
+      💖 지금은 일부 운세 메뉴가 무료로 열려 있어요!  <br>
+      따뜻한 마음으로 함께해주시는 분들 덕분에 가능한 일이에요 😊  <br>
+    </div> -->
+  </div>
+  <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); z-index: 1000;">
+    <div class="spinner" style="margin-top: 40vh;"></div>
+  </div>
+  <script>
+    const cachedFortunes = {};  // 메뉴별 캐시 저장
+
+    function showLoading() {
+      document.getElementById('loadingOverlay').style.display = 'block';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    function loadFortune(menu) {
+      if (cachedFortunes[menu] && cachedFortunes[menu].fortune_result) {
+        showFortuneModal(cachedFortunes[menu]);
+        return;
+      }
+
+      showLoading();
+
+      fetch('/api/fortune/' + menu)
+        .then(res => res.json())
+        .then(data => {
+          cachedFortunes[menu] = data;
+          showFortuneModal(data);
+          hideLoading();
+        })
+        .catch(err => {
+          alert("오류가 발생했습니다: " + err);
+          hideLoading();
+        });
+    }
+
+    function showFortuneModal(data) {
+    console.log("💬 모달에 전달된 데이터", data);
+    
+    if (!data || !data.fortune_result) {
+      alert("운세 데이터를 불러오지 못했습니다.");
+      return;
+    }
+
+    const title = data.menu_title || '운세 결과';
+    const content = data.fortune_result || '결과를 불러오는 데 문제가 발생했습니다.';
+
+    document.getElementById('modalTitle').innerText = title;
+    let coffeeMsg = `
+      <div style="text-align: center; margin-top: 40px;">
+        <p style="font-size: 15px; color: #555;">
+          이 운세가 도움이 되셨나요? <br>
+          따뜻한 커피 한 잔으로 이 서비스를 응원해 주세요 ☕  
+          <br><a href="{{ coffee_link }}" target="_blank" 
+             style="color: #d81b60; font-weight: bold; text-decoration: none;">
+            👉 따뜻한 커피 한 잔으로 응원하기
+          </a>
+        </p>
+      </div>`;
+    document.getElementById('modalContent').innerHTML = content + coffeeMsg;
+      document.getElementById('fortuneModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('fortuneModal').style.display = 'none';
+    }
+
+    function openMatchModal() {
+      document.getElementById('matchModal').style.display = 'block';
+    }
+
+    function closeMatchModal() {
+      document.getElementById('matchModal').style.display = 'none';
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    window.onload = function () {
+      const banner = document.getElementById('welcomeBanner');
+      banner.style.display = 'block';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 4000);
+
+      confetti({
+        particleCount: 120,
+        spread: 90,
+        origin: { y: 0.6 },
+      });
+    };
+  </script>
+</body>
+</html>

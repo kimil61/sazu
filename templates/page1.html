@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>AI 사주 운세</title>
+  <style>
+  body {
+    font-family: 'Apple SD Gothic Neo', sans-serif;
+    background: #fdf7ff;
+    padding: 16px;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  h2 {
+    font-size: 26px;
+    text-align: center;
+    color: #6a1b9a;
+    margin-bottom: 16px;
+  }
+
+  p {
+    font-size: 18px;
+    line-height: 1.5;
+    color: #555;
+    text-align: left;
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 18px;
+    color: #333;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+  input, select {
+    width: 100%;
+    font-size: 19px;
+    padding: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    margin-bottom: 14px;
+  }
+
+  button {
+    width: 100%;
+    padding: 16px;
+    margin-top: 24px;
+    margin-bottom: 14px;
+    background-color: #6a1b9a;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #4a148c;
+  }
+
+  .spinner {
+    border: 6px solid #eee;
+    border-top: 6px solid #6a1b9a;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .overlay-content {
+    font-size: 19px;
+    text-align: center;
+    padding: 20px;
+    color: #6a1b9a;
+  }
+
+  .overlay-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.85);
+    top: 0;
+    left: 0;
+    z-index: -1;
+  }
+
+  #loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔮 사주팔자를 알고 계시나요? </h2>
+    <p>
+      사주팔자의 뿌리는 멀리 <strong>당나라</strong>까지 거슬러 올라갑니다.<br>
+      인간이 살아가며 겪는 기쁨과 슬픔, 성공과 방황의 흐름 속에서  
+      사람들은 ‘시간’과 ‘기운’이 삶에 어떤 영향을 미치는지를 통찰하려 했습니다.<br><br>
+
+      그 흐름은 송나라에서 더욱 정교해졌고,  
+      <strong>명나라</strong>에서는 이를 집대성한 고전 《<strong>三命通会</strong>》가 탄생합니다.<br>
+      이 책은 수천 개의 실제 사주 사례를 통해  
+      천간과 지지의 조합이 인생에 어떻게 작용하는지를 기록한 명리학의 백과사전입니다.<br><br>
+
+      오늘날 우리는 디지털과 인공지능의 시대에 살고 있지만,  
+      여전히 자신을 이해하고 싶어 하고,  
+      삶의 흐름 속에서 길을 찾고자 합니다.<br><br>
+
+      <strong style="color:#6a1b9a;">
+        시대는 변해도, 인간의 본질은 변하지 않습니다.<br>
+        사랑에 설레고, 선택 앞에 머뭇거리며,  
+        관계 속에서 고민하는 마음은 수천 년 전이나 지금이나 다르지 않습니다.
+      </strong><br><br>
+
+      그래서 고전은 오히려 더 깊은 가치를 지닙니다.<br>
+      <strong>명리학은 오래되었기에 낡은 것이 아닙니다.</strong><br>
+      <strong>인간의 '변하지 않는 근본'을 품고 있기에, 시간이 지날수록 그 가치는 더욱 깊어집니다.</strong><br><br>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <img src="/static/assets/smth.jpg" alt="삼명통회 고서 이미지" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
+        <p style="font-size: 14px; color: #777; margin-top: 6px;">
+          ▲ 명리학 고서 《三命通会》 일부 이미지. 시대를 넘어 전해지는 지혜.
+        </p>
+      </div>
+
+      이 웹사이트는 《三命通会》에 기록된 원문을 직접 참고하여,  
+      당신의 사주팔자를 해석합니다.<br>
+      인공지능은 단지 그 고서를 빠르게 찾고 정리해주는 조력자일 뿐입니다.<br><br>
+
+      <em>“당신은 어떤 시간 속에서 태어났는가?”</em><br>
+      <em>“그 시간은 어떤 기운을 품고 있었는가?”</em><br><br>
+
+      사주팔자는 정답을 주지 않습니다.  
+      하지만 당신의 성향, 시기, 관계, 가능성을 돌아보게 하며,  
+      더 나은 선택을 위한 <strong>통찰의 거울</strong>이 되어줄 수 있습니다.<br><br>
+
+      아래 정보를 입력하고, 《三命通会》 속 당신만의 이야기를 만나보세요.
+    </p>
+    <form method="post">
+      <label>이름 (선택)</label>
+      <input type="text" name="name" placeholder="이름을 입력은 선택사항 😊">
+
+      <label>성별</label>
+      <select name="gender" required>
+        <option value="">성별을 선택해주세요</option>
+        <option value="male">남자</option>
+        <option value="female">여자</option>
+      </select>
+
+      <label>생년월일(양력)</label>
+      <div style="display: flex; gap: 5px;">
+        <select name="birth_year" required style="flex: 1;">
+          <option value="">년도</option>
+          {% for y in range(1920, 2025) %}
+            <option value="{{ y }}">{{ y }}년</option>
+          {% endfor %}
+        </select>
+
+        <select name="birth_month" required style="flex: 1;">
+          <option value="">월</option>
+          {% for m in range(1, 13) %}
+            <option value="{{ m }}">{{ m }}월</option>
+          {% endfor %}
+        </select>
+
+        <select name="birth_day" required style="flex: 1;">
+          <option value="">일</option>
+          {% for d in range(1, 32) %}
+            <option value="{{ d }}">{{ d }}일</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <label>출생 시간</label>
+      <select name="birthhour" required>
+        <option value="">출생 시간을 선택해주세요</option>
+        <option value="12">모름</option>
+
+        {% for h in range(0, 24) %}
+          <option value="{{ h }}">{{ h }}시</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit">운세 보러가기</button>
+    </form>
+    <div id="loadingSpinner" style="display:none; margin-top: 20px; text-align: center;">
+      <div class="spinner" style="border: 6px solid #eee; border-top: 6px solid #6a1b9a; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: auto;"></div>
+      <p style="margin-top: 10px; color: #6a1b9a;"></p>
+    </div>
+  </div>
+  <div id="loadingOverlay" style="display: none;">
+    <div class="overlay-background"></div>
+    <div class="overlay-content">
+      <div class="spinner"></div>
+      <p>당신의 운명을 해석하는 중이에요... 🔮<br>잠시만요 🙏</p>
+    </div>
+  </div>
+  <script>
+    document.querySelector("form").addEventListener("submit", function () {
+      const overlay = document.getElementById("loadingOverlay");
+      overlay.style.display = "flex";
+    });
+  </script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const yearSelect = document.querySelector('select[name="birth_year"]');
+      const monthSelect = document.querySelector('select[name="birth_month"]');
+      const daySelect = document.querySelector('select[name="birth_day"]');
+
+      if (yearSelect && monthSelect && daySelect) {
+        for (let i = 0; i < yearSelect.options.length; i++) {
+          if (yearSelect.options[i].value === "1984") {
+            yearSelect.selectedIndex = i;
+            break;
+          }
+        }
+
+        for (let i = 0; i < monthSelect.options.length; i++) {
+          if (monthSelect.options[i].value === "6") {
+            monthSelect.selectedIndex = i;
+            break;
+          }
+        }
+
+        // Trigger day update
+        updateDays();
+
+        // Wait for days to update, then select 1일
+        setTimeout(() => {
+          for (let i = 0; i < daySelect.options.length; i++) {
+            if (daySelect.options[i].value === "1") {
+              daySelect.selectedIndex = i;
+              break;
+            }
+          }
+        }, 10);
+      }
+    });
+  </script>
+  <script>
+    function updateDays() {
+      const year = parseInt(document.querySelector('select[name="birth_year"]').value);
+      const month = parseInt(document.querySelector('select[name="birth_month"]').value);
+      const daySelect = document.querySelector('select[name="birth_day"]');
+ 
+      if (!year || !month) return;
+ 
+      const daysInMonth = new Date(year, month, 0).getDate();
+      daySelect.innerHTML = '<option value="">일</option>';
+      for (let i = 1; i <= daysInMonth; i++) {
+        daySelect.innerHTML += `<option value="${i}">${i}일</option>`;
+      }
+    }
+ 
+    document.addEventListener('DOMContentLoaded', () => {
+      const yearEl = document.querySelector('select[name="birth_year"]');
+      const monthEl = document.querySelector('select[name="birth_month"]');
+ 
+      if (yearEl && monthEl) {
+        yearEl.addEventListener('change', updateDays);
+        monthEl.addEventListener('change', updateDays);
+      }
+    });
+  </script>
+</body>
+</html>
