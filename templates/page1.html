@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>AI 사주 운세</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR&display=swap" rel="stylesheet">
   <style>
   body {
-    font-family: 'Apple SD Gothic Neo', sans-serif;
+    font-family: 'Noto Serif KR', serif;
     background: #fdf7ff;
     padding: 16px;
     margin: 0;
@@ -15,56 +16,56 @@
 
   .container {
     width: 100%;
-    max-width: 480px;
     margin: auto;
     background: white;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 24px;
+    border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-sizing: border-box;
   }
 
   h2 {
-    font-size: 26px;
+    font-size: 28px;
     text-align: center;
     color: #6a1b9a;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
 
   p {
     font-size: 18px;
-    line-height: 1.5;
+    line-height: 1.6;
     color: #555;
     text-align: left;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
   }
 
   label {
     display: block;
     font-size: 18px;
     color: #333;
-    margin-top: 16px;
-    margin-bottom: 16px;
+    margin-top: 18px;
+    margin-bottom: 10px;
   }
 
   input, select {
     width: 100%;
     font-size: 19px;
-    padding: 14px;
-    border-radius: 6px;
+    padding: 16px;
+    border-radius: 8px;
     border: 1px solid #ccc;
     box-sizing: border-box;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   button {
     width: 100%;
-    padding: 16px;
-    margin-top: 24px;
-    margin-bottom: 14px;
+    padding: 18px;
+    margin-top: 26px;
+    margin-bottom: 16px;
     background-color: #6a1b9a;
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
@@ -119,7 +120,36 @@
     flex-direction: column;
     background-color: rgba(255, 255, 255, 0.9);
   }
-  </style>
+
+  @media (max-width: 480px) {
+    h2 {
+      font-size: 24px;
+    }
+
+    p, label {
+      font-size: 17px;
+    }
+
+    input, select {
+      font-size: 17px;
+      padding: 14px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 16px;
+    }
+  }
+</style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3K010VY3ZG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-3K010VY3ZG');
+</script>
 </head>
 <body>
   <div class="container">
@@ -248,7 +278,7 @@
         }
 
         for (let i = 0; i < monthSelect.options.length; i++) {
-          if (monthSelect.options[i].value === "6") {
+          if (monthSelect.options[i].value === "1") {
             monthSelect.selectedIndex = i;
             break;
           }

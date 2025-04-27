@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>오늘의 운세 대시보드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Apple SD Gothic Neo', sans-serif;
+      font-family: 'Noto Serif KR', serif;
       background: #fdf7ff;
       margin: 0;
       padding: 16px;
@@ -112,8 +113,21 @@
       100% { transform: translateX(-50%) scale(1); opacity: 0; }
     }
   </style>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3K010VY3ZG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-3K010VY3ZG');
+</script>
 </head>
 <body>
+  <div id="loadingInitial" style="text-align:center; padding: 60px;">
+    <div class="spinner"></div>
+    <p style="margin-top: 14px; font-size: 18px; color: #6a1b9a;">사주를 정성껏 정리 중입니다...</p>
+  </div>
   <div id="welcomeBanner" style="
     display:none;
     position: fixed;
@@ -129,12 +143,16 @@
     z-index: 9999;
     animation: popFade 4s ease forwards;
   ">
-    🎉 {{ name }}님, 당신의 사주팔자 세계에 오신 걸 환영합니다!
-  </div>
+✨ {{ name }}님의 사주풀이가 완성!!  💫
+</div>
+  <div id="realContent" style="display:none;">
   <div class="container">
     <h2>🔮 {{ name }}님의 사주팔자</h2>
 
     <div class="section">
+      <h3>🧠 분석 결과</h3>
+      <p>{{ saju_analyzer_result|safe }}</p>
+
       <h3>🌿 사주 상세 정보</h3>
       <table style="width:100%; border-collapse: collapse; margin-top: 12px; font-size: 16px;">
         <thead>
@@ -196,16 +214,30 @@
             <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.twelve_stage }}</td>
             <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.twelve_stage }}</td>
           </tr>
-          <tr>
+          <!-- <tr>
             <td style="padding: 10px; border: 1px solid #ccc;">십이신살</td>
             <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.year.twelve_god }}</td>
             <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.month.twelve_god }}</td>
             <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.day.twelve_god }}</td>
             <td style="padding: 10px; border: 1px solid #ccc;">{{ saju_info.hour.twelve_god }}</td>
-          </tr>
+          </tr> -->
         </tbody>
       </table>
+      {% if ctext_explanation %}
+      <div style="margin-top: 20px; background: #f3f3ff; border-left: 5px solid #11a09b; padding: 15px; border-radius: 8px;">
+        <strong>📜 삼명통회 원문</strong><br><br>
+          <div style="white-space: pre-wrap;">{{ ctext_explanation|safe }}</div>
+        </div>
+      {% endif %}
 
+      {% if ctext_kr_literal %}
+        <div style="margin-top: 20px; background: #fff8e1; border-left: 5px solid #ff6f00; padding: 15px; border-radius: 8px;">
+          <strong>📚 삼명통회 해석</strong><br><br>
+          <div style="white-space: pre-wrap;">{{ ctext_kr_literal|safe }}</div>
+        </div>
+      {% endif %}
+
+      
       
       {% if ilju_interpretation and ilju_interpretation.kr %}
         <div style="margin-top: 20px; background: #f3f3ff; border-left: 5px solid #7986cb; padding: 15px; border-radius: 8px;">
@@ -213,10 +245,11 @@
           {{ ilju_interpretation.kr | safe }}
         </div>
       {% endif %}
+
+
       <h3>✨ AI 사주 해석</h3>
-      <p>{{ saju_analysis|safe }}</p>
-      <h3>🧠 SajuAnalyzer 분석 결과</h3>
-      <p>{{ saju_analyzer_result|safe }}</p>
+      <button onclick="loadSajuAnalysis()">AI 사주 해석 보기</button>
+      <div id="aiAnalysisBox" style="display:none; margin-top:20px; background:#f3f3ff; padding:15px; border-left:5px solid #6a1b9a; border-radius:8px;"></div>
 
     </div>
 
@@ -283,6 +316,7 @@
       💖 지금은 일부 운세 메뉴가 무료로 열려 있어요!  <br>
       따뜻한 마음으로 함께해주시는 분들 덕분에 가능한 일이에요 😊  <br>
     </div> -->
+  </div>
   </div>
   <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); z-index: 1000;">
     <div class="spinner" style="margin-top: 40vh;"></div>
@@ -358,20 +392,51 @@
       document.getElementById('matchModal').style.display = 'none';
     }
   </script>
+  <script>
+    function loadSajuAnalysis() {
+      const box = document.getElementById("aiAnalysisBox");
+      box.innerHTML = '<div class="spinner" style="margin:20px auto;"></div><p style="text-align:center; color:#6a1b9a;">AI 해석 중입니다...</p>';
+      box.style.display = 'block';
+
+      fetch('/api/saju_ai_analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(res => res.json())
+        .then(data => {
+          if (data.result) {
+            box.innerHTML = '<strong>🔍 AI 해석 결과:</strong><br><br>' + data.result;
+          } else {
+            box.innerHTML = '<p style="color:red;">AI 해석에 실패했습니다.</p>';
+          }
+        })
+        .catch(err => {
+          box.innerHTML = '<p style="color:red;">서버 통신 오류가 발생했습니다.</p>';
+        });
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>
     window.onload = function () {
-      const banner = document.getElementById('welcomeBanner');
-      banner.style.display = 'block';
       setTimeout(() => {
-        banner.style.display = 'none';
-      }, 4000);
+        document.getElementById('loadingInitial').style.display = 'none';
+        document.getElementById('realContent').style.display = 'block';
 
-      confetti({
-        particleCount: 120,
-        spread: 90,
-        origin: { y: 0.6 },
-      });
+        // 2.2초 후에 팡 터지는 효과
+        confetti({
+          particleCount: 120,
+          spread: 90,
+          origin: { y: 0.6 },
+        });
+
+        // welcomeBanner도 동시에 표시
+        const banner = document.getElementById('welcomeBanner');
+        banner.style.display = 'block';
+        setTimeout(() => {
+          banner.style.display = 'none';
+        }, 4000);
+      }, 3000);
     };
   </script>
 </body>

@@ -31,7 +31,9 @@ CREATE TABLE IF NOT EXISTS wiki_content (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     section TEXT,
     line_number INTEGER,
-    content TEXT
+    content TEXT,
+    kr_literal TEXT,
+    kr_explained TEXT
 )
 """)
 
@@ -52,7 +54,7 @@ for soup in all_html:
             content = tds[1].get_text(strip=True)
             if section_title and content:
                 line_number += 1
-                cur.execute("INSERT INTO wiki_content (section, line_number, content) VALUES (?, ?, ?)",
+                cur.execute("INSERT INTO wiki_content (section, line_number, content, kr_literal, kr_explained) VALUES (?, ?, ?, NULL, NULL)",
                             (section_title, line_number, content))
 
 conn.commit()

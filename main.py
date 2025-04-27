@@ -1,10 +1,29 @@
+
 from flask import Flask, request, session, redirect, render_template
 import os, sqlite3, uuid, hashlib
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 import openai
 import re
 import sxtwl
+
+# --- 三命通会 원문 해석 (ctext) 유틸리티 함수 ---
+def normalize_section_key(day_pillar, hour_pillar):
+    # 예: '己丑日' + '甲子' => '六己日甲子时断'
+    day_stem = day_pillar[0]
+    hour_branch = hour_pillar[1]
+    return f"六{day_stem}日{hour_branch}时断"
+
+def get_ctext_match(day_pillar, hour_pillar):
+    keyword1 = f"{day_pillar}日{hour_pillar}"     # ex: 丙寅日癸巳
+    keyword2 = f"{day_pillar[0]}日{hour_pillar}"  # ex: 丙日癸巳
+    conn = sqlite3.connect("ctext.db")
+    c = conn.cursor()
+    c.execute("SELECT content, kr_literal FROM wiki_content WHERE content LIKE ? OR content LIKE ?", 
+              (f"%{keyword1}%", f"%{keyword2}%"))
+    rows = c.fetchall()
+    conn.close()
+    return [{"content": r[0], "kr_literal": r[1]} for r in rows if r[0]] if rows else None
 
 # 환경 설정 불러오기
 load_dotenv()
@@ -546,7 +565,6 @@ class SajuAnalyzer:
                 tg = get_ten_god(day_gan, hidden_g)
                 ten_gods.append(f"- {label} {zhi}: {tg}")
 
-        analysis += "<br><br><b>[십성 분석]</b><br>" + "<br>".join(ten_gods)
         return analysis
 
 # Analyze saju using SajuAnalyzer class
@@ -661,20 +679,20 @@ def page2():
         birthdate = datetime.now()
 
     # Generate or retrieve today’s fortune
-    cached = get_fortune_from_db(email, "basic")
-    if cached:
-        today_fortune = cached
-    else:
-        today_fortune = generate_fortune(birthdate, birth_hour)
-        save_fortune_to_db(email, "basic", today_fortune)
+    # cached = get_fortune_from_db(email, "basic")
+    # if cached:
+    #     today_fortune = cached
+    # else:
+    #     today_fortune = generate_fortune(birthdate, birth_hour)
+    #     save_fortune_to_db(email, "basic", today_fortune)
 
     # Generate saju analysis with caching
-    cached_saju = get_fortune_from_db(email, "saju")
-    if cached_saju:
-        saju_analysis = cached_saju
-    else:
-        saju_analysis = generate_saju_analysis(birthdate, birth_hour)
-        save_fortune_to_db(email, "saju", saju_analysis)
+    # cached_saju = get_fortune_from_db(email, "saju")
+    # if cached_saju:
+    #     saju_analysis = cached_saju
+    # else:
+    #     saju_analysis = generate_saju_analysis(birthdate, birth_hour)
+    #     save_fortune_to_db(email, "saju", saju_analysis)
 
     # 일주 계산 및 해석 추가
     pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
@@ -686,17 +704,28 @@ def page2():
         pillars['year'], pillars['month'], pillars['day'], pillars['hour']
     )
 
+    # 추가: 三命通会 원문 해석 가져오기
+    print("🔎 section_key:", normalize_section_key(pillars["day"], pillars["hour"]))
+    ctext_rows = get_ctext_match(pillars["day"], pillars["hour"])
+    ctext_explanation = None
+    ctext_kr_literal = None
+    if ctext_rows:
+        ctext_explanation = "\n\n".join([row["content"] for row in ctext_rows])
+        ctext_kr_literal = "\n\n".join([row["kr_literal"] for row in ctext_rows if row["kr_literal"]])
+
     return render_template(
         "page2.html",
         name=name,
-        today_fortune=today_fortune,
-        saju_analysis=saju_analysis,
+        # today_fortune=today_fortune,
+        # saju_analysis=saju_analysis,
         coffee_link=BUY_ME_A_COFFEE_LINK,
         ilju=ilju,
         ilju_interpretation=ilju_interpretation,
         saju_info=saju_info,
         get_twelve_gods_by_day_branch=get_twelve_gods_by_day_branch,
         saju_analyzer_result=saju_analyzer_result,
+        ctext_explanation=ctext_explanation,
+        ctext_kr_literal=ctext_kr_literal,
     )
 
 # route: PAGE 3
@@ -824,6 +853,63 @@ def match_result():
         result = f"⚠️ 오류 발생: {e}"
 
     return render_template("match_result.html", result=result)
+
+@app.route("/api/saju_ai_analysis", methods=["POST"])
+def api_saju_ai_analysis():
+    if "session_token" not in session:
+        return {"error": "unauthorized"}, 401
+
+    birthdate_str = session.get("birthdate")
+    birth_hour = int(session.get("birthhour", 12))
+
+    try:
+        birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
+    except:
+        return {"error": "invalid birthdate"}, 400
+
+    pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
+    saju_info = get_saju_details(pillars)
+
+    # 원문 해석과 일주 해석 병합
+    ilju = pillars["day"]
+    ilju_interpretation = get_ilju_interpretation(ilju)
+    ilju_kr = ilju_interpretation.get("kr", "")
+
+    # 삼명통회
+    ctext = get_ctext_match(pillars["day"], pillars["hour"]) or ""
+
+    # 오행/십성 분석
+    saju_analyzer_result = analyze_saju_by_saju_analyzer(
+        pillars['year'], pillars['month'], pillars['day'], pillars['hour']
+    )
+
+    # GPT에게 전달할 통합 프롬프트 구성
+    prompt = f"""
+당신은 사주 해석 전문가입니다.
+다음은 한 사람의 사주 정보입니다:
+
+- 일주: {ilju}
+- 일주 해석 (DB): {ilju_kr}
+- 삼명통회 원문: {ctext}
+- 오행/십성 해석: {saju_analyzer_result}
+
+이 정보를 종합하여, 이 사람의 인생 전반적 특성과 강점, 유의사항을 300자 내외로 종합 해석해주세요.
+"""
+
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "당신은 전문 사주 해석가입니다."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.8,
+            max_tokens=600
+        )
+        reply = format_fortune_text(response.choices[0].message.content)
+        return {"result": reply}
+    except Exception as e:
+        return {"error": str(e)}, 500
 
 if __name__ == "__main__":
     app.run(debug=True)
