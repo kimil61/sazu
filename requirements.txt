@@ -3,3 +3,5 @@ gunicorn
 openai
 python-dotenv
 sxtwl
+fpdf
+pytz

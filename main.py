@@ -1,12 +1,17 @@
 
 from flask import Flask, request, session, redirect, render_template
+from flask import send_file
+from io import BytesIO
+from fpdf import FPDF
 import os, sqlite3, uuid, hashlib
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import openai
 import re
 import sxtwl
+import random
 
+# -------- 유틸릴리 함수 ------------------------------
 # --- 三命通会 원문 해석 (ctext) 유틸리티 함수 ---
 def normalize_section_key(day_pillar, hour_pillar):
     # 예: '己丑日' + '甲子' => '六己日甲子时断'
@@ -24,6 +29,56 @@ def get_ctext_match(day_pillar, hour_pillar):
     rows = c.fetchall()
     conn.close()
     return [{"content": r[0], "kr_literal": r[1]} for r in rows if r[0]] if rows else None
+
+def get_hour_branch(hour):
+    branches = earthly_branches
+    index = ((hour + 1) // 2) % 12
+    return branches[index]
+
+def calculate_four_pillars(dt: datetime) -> dict:
+    day = sxtwl.fromSolar(dt.year, dt.month, dt.day)
+    y_gz = day.getYearGZ(False)
+    m_gz = day.getMonthGZ()
+    d_gz = day.getDayGZ()
+    h_gz = day.getHourGZ(dt.hour)
+
+    return {
+        "year": GAN[y_gz.tg] + ZHI[y_gz.dz],
+        "month": GAN[m_gz.tg] + ZHI[m_gz.dz],
+        "day": GAN[d_gz.tg] + ZHI[d_gz.dz],
+        "hour": GAN[h_gz.tg] + ZHI[h_gz.dz],
+    }
+
+def four_pillars_from_gmt(gmt_dt: datetime, tz_offset_hours: int = 9) -> dict:
+    """
+    gmt_dt : UTC 기준 datetime
+    tz_offset_hours : 예: 한국은 +9
+    """
+    # UTC → 현지시간으로 변환
+    local_dt = gmt_dt + timedelta(hours=tz_offset_hours)
+
+    # 사주 계산
+    day = sxtwl.fromSolar(local_dt.year, local_dt.month, local_dt.day)
+    y_gz = day.getYearGZ(False)
+    m_gz = day.getMonthGZ()
+    d_gz = day.getDayGZ()
+    h_gz = day.getHourGZ(local_dt.hour)
+
+    return {
+        "year": GAN[y_gz.tg] + ZHI[y_gz.dz],
+        "month": GAN[m_gz.tg] + ZHI[m_gz.dz],
+        "day": GAN[d_gz.tg] + ZHI[d_gz.dz],
+        "hour": GAN[h_gz.tg] + ZHI[h_gz.dz],
+    }
+
+# Helper: 재계산용
+def calc_pillars_from_session(birthdate, birthtime, tz_name):
+    import pytz
+    dt = datetime.strptime(f"{birthdate} {birthtime}", "%Y-%m-%d %H:%M")
+    offset = int(datetime.now(pytz.timezone(tz_name)).utcoffset().total_seconds() / 3600)
+    return four_pillars_from_gmt(dt, offset)
+
+
 
 # 환경 설정 불러오기
 load_dotenv()
@@ -69,6 +124,14 @@ def init_db():
             cn TEXT,
             kr TEXT,
             en TEXT
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS match_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            key TEXT UNIQUE,
+            report TEXT,
+            created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     conn.commit()
@@ -153,12 +216,14 @@ def format_fortune_text(text):
 
     return '<br><br>'.join(result)
 
+
+
 # route: PAGE 1
 @app.route("/", methods=["GET", "POST"])
 def page1():
     # Set default values for selects
     default_year = 1984
-    default_month = 6
+    default_month = 1
     default_day = 1
     if request.method == "POST":
         year = int(request.form["birth_year"])
@@ -198,24 +263,171 @@ earthly_branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申
 GAN = heavenly_stems
 ZHI = earthly_branches
 
-def get_hour_branch(hour):
-    branches = earthly_branches
-    index = ((hour + 1) // 2) % 12
-    return branches[index]
+# ---------- GPT Preview Short Prompt ----------
+# --- GPT 정밀 리포트 캐싱 유틸 -----------------
+def get_match_key(u_bd, p_bd):
+    """
+    두 사람의 생년월일·시간 문자열을 정렬한 뒤 SHA256 해시를 key 로 사용
+    (순서가 바뀌어도 동일 key)
+    """
+    raw = "|".join(sorted([u_bd, p_bd]))
+    return hashlib.sha256(raw.encode()).hexdigest()
 
-def calculate_four_pillars(dt: datetime) -> dict:
-    day = sxtwl.fromSolar(dt.year, dt.month, dt.day)
-    y_gz = day.getYearGZ(False)
-    m_gz = day.getMonthGZ()
-    d_gz = day.getDayGZ()
-    h_gz = day.getHourGZ(dt.hour)
+def fetch_or_generate_report(match_key, prompt):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT report FROM match_reports WHERE key=?", (match_key,))
+    row = c.fetchone()
+    if row:
+        conn.close()
+        return row[0]               # 캐시 hit
+    # --- GPT 호출 ---
+    try:
+        reply = openai.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[{"role":"user","content":prompt}],
+            max_tokens=1400, temperature=0.85
+        ).choices[0].message.content
+    except Exception as e:
+        reply = f"⚠️ 리포트 생성 오류: {e}"
 
-    return {
-        "year": GAN[y_gz.tg] + ZHI[y_gz.dz],
-        "month": GAN[m_gz.tg] + ZHI[m_gz.dz],
-        "day": GAN[d_gz.tg] + ZHI[d_gz.dz],
-        "hour": GAN[h_gz.tg] + ZHI[h_gz.dz],
-    }
+    c.execute("INSERT OR IGNORE INTO match_reports (key, report) VALUES (?,?)",
+              (match_key, reply))
+    conn.commit(); conn.close()
+    return reply
+
+def full_report_prompt(user, partner, score,
+                       user_counts, partner_counts, element_summary):
+    return f"""
+당신은 전통 명리학·삼명통회 인용까지 활용하는 궁합 전문가입니다.
+
+[요약 점수]
+- 총점: {score}점
+
+[오행 분포]
+{user}: {user_counts}
+{partner}: {partner_counts}
+
+[오행/십성 해석 요약]
+{element_summary}
+
+위 정보를 토대로
+① 성향 비교 ② 충돌·보완 포인트 ③ 실전 조언 ④ 고전 인용
+항목을 포함한 1,000자 내외 자세한 궁합 리포트를 작성해 주세요.
+근거를 꼭 언급하고, 따뜻하지만 구체적이어야 합니다.
+"""
+
+def full_report_prompt_v2(u, p, score, u_line, p_line, elem_sum):
+    return f"""
+당신은 전통 명리학·《三命通會》를 기반으로 궁합을 해설하는 전문가입니다.
+**틀린 상징(요일·별자리·혈액형) 언급 금지**. 반드시 간지·오행·십성 용어를 사용하세요.
+
+[기본 정보]
+- 총점: {score}점
+
+[오행 분포]
+- {u_line}
+- {p_line}
+
+[오행/십성 해석 요약]
+{elem_sum}
+
+<보고서 형식>
+① 성향 비교 (200자 이내, 음양·오행 키워드 포함)
+② 충돌·보완 포인트 (200자, 상생·상극 근거 제시)
+③ 실전 조언 (세 가지 bullet)
+④ 고전 인용 & 해설 (《三命通會》 한‧두 줄 인용 → 150자 해설)
+
+모든 섹션 사이에 빈 줄 한 칸.
+총 1,000자 내외. 한자 용어는 괄호 없이 그대로 표기.
+"""
+# ------------------------------------------------
+
+def preview_prompt(score, max_el, min_el, u, p):
+    return f"""
+두 사람의 궁합 점수는 {score}점입니다.
+{u} 쪽은 {max_el} 기운이 강하고, {p} 쪽은 {min_el} 기운이 약합니다.
+
+위 정보를 2문장으로 요약해 주세요.
+1) 서로에게 어떤 느낌을 줄지
+2) 리포트에서 더 확인할 부분을 암시
+"""
+# ---------- END ----------
+# ---------- 궁합 알고리즘 유틸 ----------
+from itertools import product
+
+def stem_relation(a, b):
+    """천간 합(1) / 충(-1) 판정"""
+    stem_complements = {'甲':'己','乙':'庚','丙':'辛','丁':'壬','戊':'癸',
+                        '己':'甲','庚':'乙','辛':'丙','壬':'丁','癸':'戊'}
+    clashes = {('甲','庚'),('乙','辛'),('丙','壬'),('丁','癸'),('戊','甲'),
+               ('己','乙'),('庚','丙'),('辛','丁'),('壬','戊'),('癸','己')}
+    if stem_complements.get(a) == b:
+        return 1
+    if (a, b) in clashes or (b, a) in clashes:
+        return -1
+    return 0
+
+def branch_relation(a, b):
+    """지지 삼합(2)·육합(1) / 충(-2)"""
+    three_harmonies = [('申','子','辰'),('寅','午','戌'),('亥','卯','未')]
+    six_harmonies   = [('子','丑'),('寅','亥'),('卯','戌'),('辰','酉'),
+                       ('巳','申'),('午','未')]
+    six_clashes     = [('子','午'),('丑','未'),('寅','申'),
+                       ('卯','酉'),('辰','戌'),('巳','亥')]
+    for trio in three_harmonies:
+        if a in trio and b in trio:
+            return 2
+    if (a, b) in six_harmonies or (b, a) in six_harmonies:
+        return 1
+    if (a, b) in six_clashes or (b, a) in six_clashes:
+        return -2
+    return 0
+
+def element_synergy(count_u, count_p):
+    """오행 보완·과잉 점수  (-5 ~ +10 정도)"""
+    score = 0
+    for el in ['목', '화', '토', '금', '수']:
+        diff = count_u[el] - count_p[el]
+        if diff == 0:
+            score += 2
+        elif abs(diff) == 1:
+            score += 1
+        else:
+            score -= 1
+    return score
+
+def spouse_star_score(day_stem, partner_pillars):
+    """배우자 별(재/관) 간단 호응 점수 0‑3"""
+    cycle = {'wood': 'fire', 'fire': 'earth', 'earth': 'metal',
+             'metal': 'water', 'water': 'wood'}
+    self_el, _yy = stem_to_element_yinyang(day_stem)
+    need_el = cycle.get(self_el)
+    if not need_el:
+        return 0
+    score = 0
+    for pil in partner_pillars.values():
+        el = element_map[pil[0]][0]
+        if el == need_el:
+            score += 1
+    return min(score, 3)
+
+def match_score(cu, cp, stems_u, stems_p, pillars_u, pillars_p):
+    """최종 궁합 점수 0‑100"""
+    s_elem = element_synergy(cu, cp)            # 0‑10
+    s_rel  = 0
+    for a, b in product(stems_u, stems_p):
+        s_rel += stem_relation(a, b)
+    for a, b in product([p[1] for p in pillars_u.values()],
+                        [p[1] for p in pillars_p.values()]):
+        s_rel += branch_relation(a, b)
+    s_sp   = spouse_star_score(stems_u[2], pillars_p) \
+           + spouse_star_score(stems_p[2], pillars_u)
+
+    # 가중치 합산 (경험적 스케일)
+    raw = s_elem * 3 + s_rel * 2 + s_sp * 3
+    return max(0, min(100, 50 + raw))
+# ---------- END 궁합 알고리즘 유틸 ----------
 
 # ====== 사주 상세 계산 함수 및 테이블 ======
 # 오행 매핑 (중국 한자)
@@ -728,131 +940,6 @@ def page2():
         ctext_kr_literal=ctext_kr_literal,
     )
 
-# route: PAGE 3
-@app.route("/result/<menu>")
-def page3(menu):
-    if "session_token" not in session:
-        return redirect("/")
-
-    menu_titles = {
-        "love": "연애운 💘",
-        "money": "재물운 💰",
-        "health": "건강운 💪",
-        "match": "궁합 🔗",
-        "mission": "인생 미션 🎯"
-    }
-    menu_title = menu_titles.get(menu, "운세")
-
-    prompt = f"""
-당신은 운세 해석 전문가입니다.
-아래 사용자의 사주 기반으로 "{menu_title}" 항목에 대한 운세를 300자 이내로 알려주세요.
-항목: {menu_title}
-"""
-
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "당신은 정확한 사주 운세 전문가입니다."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.8,
-            max_tokens=600
-        )
-        fortune_result = format_fortune_text(response.choices[0].message.content)
-    except Exception as e:
-        fortune_result = f"⚠️ 오류 발생: {e}"
-
-    return render_template("page3.html", menu_title=menu_title, fortune_result=fortune_result)
-
-# route: AJAX fortune results
-@app.route("/api/fortune/<menu>")
-def api_fortune(menu):
-    if "session_token" not in session:
-        return {"error": "unauthorized"}, 401
-
-    email = session.get("email")
-    menu_titles = {
-        "love": "연애운 💘",
-        "money": "재물운 💰",
-        "health": "건강운 💪",
-        "match": "궁합 🔗",
-        "mission": "인생 미션 🎯",
-        "today": "오늘의 운세 🌟"
-    }
-    menu_title = menu_titles.get(menu, "운세")
-
-    birthdate_str = session.get("birthdate")
-    birth_hour = int(session.get("birthhour", 12))
-    birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
-
-    if menu == "today":
-        result = generate_fortune(birthdate, birth_hour)
-        return {"menu_title": menu_titles[menu], "fortune_result": result}
-
-    cached = get_fortune_from_db(email, menu)
-    if cached:
-        return {"menu_title": menu_title, "fortune_result": cached}
-
-    prompt = f"""
-    당신은 운세 해석 전문가입니다.
-    사용자의 사주 정보를 기반으로 "{menu_title}" 항목에 대해 300자 이내로 자연스럽게 운세를 알려주세요.
-    항목: {menu_title}
-    """
-
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "당신은 정확한 사주 운세 전문가입니다."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.8,
-            max_tokens=600
-        )
-        fortune_result = format_fortune_text(response.choices[0].message.content)
-    except Exception as e:
-        fortune_result = f"⚠️ 오류 발생: {e}"
-
-    save_fortune_to_db(email, menu, fortune_result)
-    return {"menu_title": menu_title, "fortune_result": fortune_result}
-
-@app.route("/match_result")
-def match_result():
-    your_name = request.args.get("yourName")
-    your_birth = request.args.get("yourBirth")
-    partner_name = request.args.get("partnerName")
-    partner_birth = request.args.get("partnerBirth")
-
-    prompt = f"""
-당신은 연애궁합 전문가입니다.
-아래 두 사람의 이름과 생년월일을 참고하여, 이들의 궁합 점수를 100점 만점으로 평가하고,
-간단한 이유와 함께 결과를 300자 이내로 알려주세요.
-
-이름1: {your_name}, 생일1: {your_birth}
-이름2: {partner_name}, 생일2: {partner_birth}
-
-결과는 다음 형식을 지켜주세요:
-
-궁합 점수: XX점
-설명: (두 사람의 성향이나 관계 흐름을 중심으로)
-      """
-
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "당신은 연애 궁합 전문 운세 상담가입니다."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=600
-        )
-        result = format_fortune_text(response.choices[0].message.content)
-    except Exception as e:
-        result = f"⚠️ 오류 발생: {e}"
-
-    return render_template("match_result.html", result=result)
 
 @app.route("/api/saju_ai_analysis", methods=["POST"])
 def api_saju_ai_analysis():
@@ -910,6 +997,7 @@ def api_saju_ai_analysis():
         return {"result": reply}
     except Exception as e:
         return {"error": str(e)}, 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
