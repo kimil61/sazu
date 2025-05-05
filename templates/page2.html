@@ -379,29 +379,40 @@
     }
   </script>
   <script>
-    function loadSajuAnalysis() {
-      const box = document.getElementById("aiAnalysisBox");
-      box.innerHTML = '<div class="spinner" style="margin:20px auto;"></div><p style="text-align:center; color:#6a1b9a;">AI 해석 중입니다...</p>';
-      box.style.display = 'block';
+  let aiAnalysisCached = null;
 
-      fetch('/api/saju_ai_analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }).then(res => res.json())
-        .then(data => {
-          if (data.result) {
-            box.innerHTML = '<strong>🔍 AI 해석 결과:</strong><br><br>' + data.result;
-          } else {
-            box.innerHTML = '<p style="color:red;">AI 해석에 실패했습니다.</p>';
-          }
-          document.getElementById('paymentSection').style.display = 'block';
-        })
-        .catch(err => {
-          box.innerHTML = '<p style="color:red;">서버 통신 오류가 발생했습니다.</p>';
-        });
+  function loadSajuAnalysis() {
+    const box = document.getElementById("aiAnalysisBox");
+
+    if (aiAnalysisCached) {
+      box.innerHTML = '<strong>🔍 AI 해석 결과:</strong><br><br>' + aiAnalysisCached;
+      box.style.display = 'block';
+      document.getElementById('paymentSection').style.display = 'block';
+      return;
     }
+
+    box.innerHTML = '<div class="spinner" style="margin:20px auto;"></div><p style="text-align:center; color:#6a1b9a;">AI 해석 중입니다...</p>';
+    box.style.display = 'block';
+
+    fetch('/api/saju_ai_analysis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(res => res.json())
+      .then(data => {
+        if (data.result) {
+          aiAnalysisCached = data.result;
+          box.innerHTML = '<strong>🔍 AI 해석 결과:</strong><br><br>' + data.result;
+        } else {
+          box.innerHTML = '<p style="color:red;">AI 해석에 실패했습니다.</p>';
+        }
+        document.getElementById('paymentSection').style.display = 'block';
+      })
+      .catch(err => {
+        box.innerHTML = '<p style="color:red;">서버 통신 오류가 발생했습니다.</p>';
+      });
+  }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>

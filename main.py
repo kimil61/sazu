@@ -946,6 +946,10 @@ def api_saju_ai_analysis():
     if "session_token" not in session:
         return {"error": "unauthorized"}, 401
 
+    # Check for cached analysis in session
+    if "cached_saju_analysis" in session:
+        return {"result": session["cached_saju_analysis"]}
+
     birthdate_str = session.get("birthdate")
     birth_hour = int(session.get("birthhour", 12))
 
@@ -994,6 +998,8 @@ def api_saju_ai_analysis():
             max_tokens=600
         )
         reply = format_fortune_text(response.choices[0].message.content)
+        # Cache the result in session
+        session["cached_saju_analysis"] = reply
         return {"result": reply}
     except Exception as e:
         return {"error": str(e)}, 500
