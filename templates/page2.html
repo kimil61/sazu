@@ -261,7 +261,11 @@
 
     <div class="section">
       <div id="paymentSection" style="display:none; text-align: center;">
-        <button onclick="document.getElementById('donationModal').style.display='block';" style="width: 100%; padding: 16px; margin-top: 24px; background-color: #11a09b; color: white; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer;">
+        <button onclick="gtag('event', 'click_donate', {
+    event_category: 'engagement',
+    event_label: '후원버튼',
+    value: 1
+  }); console.log('✅ click_donate event sent to GA4'); document.getElementById('donationModal').style.display='block';" style="width: 100%; padding: 16px; margin-top: 24px; background-color: #11a09b; color: white; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer;">
           ☕ 커피 한 잔으로 응원하기
         </button>
       </div>
