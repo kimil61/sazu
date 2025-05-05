@@ -429,17 +429,19 @@
 </body>
 
   <script>
-  document.getElementById('generatePdfButton').addEventListener('click', function() {
-    const currentYear = new Date().getFullYear();
-    const nextYear = currentYear + 1;
-    document.getElementById('pdfLoadingSpinner').style.display = 'block';
+  const generateBtn = document.getElementById('generatePdfButton');
+  if (generateBtn) {
+    generateBtn.addEventListener('click', function() {
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+      document.getElementById('pdfLoadingSpinner').style.display = 'block';
 
-    setTimeout(() => {
-      document.getElementById('pdfLoadingSpinner').style.display = 'none';
-      document.getElementById('pdfPreviewModal').style.display = 'block';
-
-    }, 2500);
-  });
+      setTimeout(() => {
+        document.getElementById('pdfLoadingSpinner').style.display = 'none';
+        document.getElementById('pdfPreviewModal').style.display = 'block';
+      }, 2500);
+    });
+  }
 
   function closePdfPreview() {
     document.getElementById('pdfPreviewModal').style.display = 'none';
