@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상품 목록</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f9f9f9;
+            padding: 40px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #b63c74;
+        }
+        .product {
+            border-bottom: 1px solid #eee;
+            padding: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .product:last-child {
+            border-bottom: none;
+        }
+        .product-info {
+            flex-grow: 1;
+        }
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .product-price {
+            margin-top: 5px;
+            color: #888;
+        }
+        .buy-button {
+            background-color: #b63c74;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>상품 목록</h1>
+        {% for product in products %}
+        <div class="product">
+            <div class="product-info">
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-price">{{ product.price }}</div>
+            </div>
+            <!-- <button onclick="alert('결제 시스템은 아직 연결되지 않았습니다.')" class="buy-button">결제하기</button> -->
+
+            <a href="/pay/{{ product.id }}" class="buy-button">결제하기</a>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

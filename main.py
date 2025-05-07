@@ -216,10 +216,12 @@ def format_fortune_text(text):
 
     return '<br><br>'.join(result)
 
-
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 # route: PAGE 1
-@app.route("/", methods=["GET", "POST"])
+@app.route("/page1", methods=["GET", "POST"])
 def page1():
     # Set default values for selects
     default_year = 1984
@@ -875,7 +877,7 @@ def get_ilju_interpretation(ilju):
         return {"cn": None, "kr": None, "en": None}
 
 # route: PAGE 2
-@app.route("/dashboard")
+@app.route("/page2")
 def page2():
     if "session_token" not in session:
         return redirect("/")
@@ -1004,6 +1006,88 @@ def api_saju_ai_analysis():
     except Exception as e:
         return {"error": str(e)}, 500
 
+
+
+# 로그인 라우트 추가
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    next_url = request.args.get("next", "/products")
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+        hashed_pw = hashlib.sha256(password.encode()).hexdigest()
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)")
+        c.execute("SELECT email FROM accounts WHERE email=? AND password=?", (email, hashed_pw))
+        row = c.fetchone()
+        conn.close()
+
+        if row:
+            session["username"] = email
+            return redirect(next_url)
+        else:
+            return render_template("login.html", error="이메일 또는 비밀번호가 잘못되었습니다.", next=next_url)
+    return render_template("login.html", next=next_url)
+
+
+# 상품 목록 라우트 추가
+@app.route("/products")
+def products():
+    product_list = [
+        {"id": 1, "name": "1개월 이용권", "price": "₩1,000"},
+        {"id": 2, "name": "3개월 패키지", "price": "₩2,500"},
+        {"id": 3, "name": "프리미엄 궁합 리포트", "price": "₩5,000"},
+    ]
+    return render_template("products.html", products=product_list)
+
+
+
+# 결제 라우트 추가
+@app.route("/pay/<int:product_id>")
+def pay(product_id):
+    if "username" not in session:
+        return redirect(f"/login?next=/pay/{product_id}")
+    return render_template("pay.html", product_id=product_id)
+
+# /payment 라우트 추가
+@app.route("/payment")
+def payment():
+    if "username" not in session:
+        return redirect("/login?next=/payment")
+    return render_template("payment.html")
+
+# 회원가입 라우트 추가
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
+
+        # 기본 유효성 검사
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            return render_template("signup.html", error="올바른 이메일 주소를 입력해주세요.")
+        if password != confirm_password:
+            return render_template("signup.html", error="비밀번호가 일치하지 않습니다.")
+
+        # 비밀번호 해시 처리
+        hashed_pw = hashlib.sha256(password.encode()).hexdigest()
+
+        # DB에 사용자 저장
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)")
+        try:
+            c.execute("INSERT INTO accounts (email, password) VALUES (?, ?)", (email, hashed_pw))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            conn.close()
+            return render_template("signup.html", error="이미 가입된 이메일입니다.")
+        conn.close()
+        return redirect("/login")
+    return render_template("signup.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

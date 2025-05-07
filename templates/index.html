@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사주팔자 메인</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff8f2;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #b63c74;
+            color: white;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title {
+            font-size: 24px;
+            margin-left: 16px;
+        }
+        .auth-buttons {
+            margin-right: 16px;
+        }
+        .auth-buttons a {
+            color: white;
+            margin-left: 10px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .banner {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+        }
+        .description {
+            max-width: 800px;
+            font-size: 18px;
+            line-height: 1.7;
+            color: #333;
+            margin-bottom: 40px;
+        }
+        .saju-btn {
+            background-color: #b63c74;
+            color: white;
+            padding: 14px 28px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        footer {
+            background-color: #f2f2f2;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-title">운명의 사주팔자</div>
+        <div class="auth-buttons">
+            <a href="/login">로그인</a>
+            <a href="/signup">회원가입</a>
+        </div>
+    </header>
+    <main>
+        <div class="banner">
+            <img src="/static/assets/banner.png" alt="사주 배너 이미지" style="width: 100%; max-width: 800px; height: auto; border-radius: 8px;">
+        </div>
+        <div class="description">
+            사주팔자는 태어난 연월일시의 간지를 기준으로 인생의 성향, 건강, 직업, 인간관계, 재물운, 애정운 등을 분석하는 동양 철학의 핵심입니다.
+            고대부터 전해 내려온 이 지혜는 단순한 운세를 넘어, 나 자신을 이해하고 삶의 방향을 설계하는 데 깊은 통찰을 제공합니다.
+            <br><br>
+            현대에서는 과학적 통계와 인공지능의 도움으로 사주 해석이 더욱 정교하고, 개인 맞춤화되어 제공되고 있습니다.
+            이 사이트는 전통 명리학 이론과 현대 AI 분석을 결합하여, 여러분이 더 나은 결정을 내릴 수 있도록 돕습니다.
+            <br><br>
+            지금 바로 사주를 확인하고, 당신만의 운명 지도를 펼쳐보세요.
+        </div>
+        <a href="/page1"><button class="saju-btn">사주팔자 보기</button></a>
+    </main>
+    <footer>
+        ⓒ 2025 SkyLoom | 대표자: 김일 | 사업자등록번호: 812-72-00526<br>
+        인천광역시 미추홀구 낙섬동로 134,105동 403호(용현동)
+    </footer>
+</body>
+</html>

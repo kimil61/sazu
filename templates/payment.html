@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카카오페이 결제창</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #fffaf0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #b63c74;
+            margin-bottom: 20px;
+        }
+        .kakao-button {
+            background-color: #fee500;
+            color: #3c1e1e;
+            font-weight: bold;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .kakao-button:hover {
+            background-color: #fdd835;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>카카오페이로 결제하기</h1>
+        <p>아래 버튼을 누르면 카카오페이 결제창이 열릴 예정입니다.</p>
+        <button class="kakao-button">카카오페이 결제 시작</button>
+    </div>
+</body>
+</html>
