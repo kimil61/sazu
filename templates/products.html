@@ -59,17 +59,29 @@
 <body>
     <div class="container">
         <h1>상품 목록</h1>
-        {% for product in products %}
         <div class="product">
             <div class="product-info">
-                <div class="product-name">{{ product.name }}</div>
-                <div class="product-price">{{ product.price }}</div>
+                <div class="product-name">사주 자세한 리포트 이용권</div>
+                <div class="product-price">9,900원</div>
             </div>
-            <!-- <button onclick="alert('결제 시스템은 아직 연결되지 않았습니다.')" class="buy-button">결제하기</button> -->
-
-            <a href="/pay/{{ product.id }}" class="buy-button">결제하기</a>
+            <a href="/pay/1" class="buy-button">결제하기</a>
         </div>
-        {% endfor %}
+
+        <div class="product">
+            <div class="product-info">
+                <div class="product-name">2025년 운세 리포트</div>
+                <div class="product-price">2,500원</div>
+            </div>
+            <a href="/pay/2" class="buy-button">결제하기</a>
+        </div>
+
+        <div class="product">
+            <div class="product-info">
+                <div class="product-name">사주 짝궁 궁합</div>
+                <div class="product-price">19,900원</div>
+            </div>
+            <a href="/pay/3" class="buy-button">결제하기</a>
+        </div>
     </div>
 </body>
 </html>

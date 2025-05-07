@@ -52,8 +52,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>상품 번호 {{ product_id }} 결제하기</h1>
-        <p>아래 버튼을 클릭하여 결제를 진행해 주세요.</p>
+        <h1>
+            {% if product_id == 1 %}
+                사주 자세한 리포트 이용권 (9,900원)
+            {% elif product_id == 2 %}
+                2025년 운세 리포트 (2,500원)
+            {% elif product_id == 3 %}
+                사주 짝궁 궁합 리포트 (19,900원)
+            {% else %}
+                선택한 상품 결제하기
+            {% endif %}
+        </h1>
+        <p>선택하신 리포트 상품을 결제하고, 이메일로 받아보세요.</p>
         <a href="/payment" class="pay-button">⚡ 카카오페이로 빠르게 결제하기</a>
     </div>
     <div style="margin: 60px auto 0; max-width: 600px; font-size: 14px; color: #555; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
