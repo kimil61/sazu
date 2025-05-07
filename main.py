@@ -250,7 +250,7 @@ def page1():
         session["birthhour"] = birthhour
 
         save_or_update_user(name, email, birthdate, birthhour, session_token)
-        return redirect("/dashboard")
+        return redirect("/page2")
     # Pass defaults for select elements to the template for GET
     return render_template("page1.html",
                            default_year=default_year,
